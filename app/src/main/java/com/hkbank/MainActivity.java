@@ -1,6 +1,6 @@
 package com.hkbank;
 
-import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -12,11 +12,13 @@ import android.view.View;
 import android.widget.ListView;
 
 import com.hkbank.adapter.SMSDataAdapter;
-import com.hkbank.service.SMSService;
-import com.hkbank.utils.AdapterShare;
+import com.hkbank.broadcast.SMSBroadcastReceiver;
 import com.hkbank.utils.CacheManager;
 
 public class MainActivity extends AppCompatActivity {
+
+    private SMSDataAdapter adapter;
+    private SMSBroadcastReceiver receiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,13 +38,13 @@ public class MainActivity extends AppCompatActivity {
 
         /* set list view */
         ListView smsListView = (ListView) findViewById(R.id.smsListView);
-        SMSDataAdapter adapter = new SMSDataAdapter(this, CacheManager.getCache());
+        adapter = new SMSDataAdapter(this, CacheManager.getCache());
         smsListView.setAdapter(adapter);
-        AdapterShare.setAdapter("SMSListView", adapter);
 
-        /* start service */
-        Intent startIntent = new Intent(this, SMSService.class);
-        startService(startIntent);
+        /* 注册广播监听 */
+        receiver = new SMSBroadcastReceiver(adapter);
+        IntentFilter filter = new IntentFilter("android.provider.Telephony.SMS_RECEIVED");
+        registerReceiver(receiver, filter);
     }
 
     @Override
@@ -70,8 +72,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        /* start service */
-        Intent endIntent = new Intent(this, SMSService.class);
-        startService(endIntent);
     }
+
 }
